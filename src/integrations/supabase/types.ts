@@ -9,7 +9,253 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          created_at: string | null
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ebooks: {
+        Row: {
+          author: string
+          category_id: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          file_url: string | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          language: string | null
+          pages: number | null
+          price: number
+          published_date: string | null
+          rating: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author: string
+          category_id?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          file_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          language?: string | null
+          pages?: number | null
+          price: number
+          published_date?: string | null
+          rating?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string
+          category_id?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          file_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          language?: string | null
+          pages?: number | null
+          price?: number
+          published_date?: string | null
+          rating?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ebooks_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      Laloid: {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          created_at: string | null
+          ebook_id: string
+          id: string
+          order_id: string
+          price: number
+        }
+        Insert: {
+          created_at?: string | null
+          ebook_id: string
+          id?: string
+          order_id: string
+          price: number
+        }
+        Update: {
+          created_at?: string | null
+          ebook_id?: string
+          id?: string
+          order_id?: string
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_ebook_id_fkey"
+            columns: ["ebook_id"]
+            isOneToOne: false
+            referencedRelation: "ebooks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          id: string
+          payment_method: string | null
+          status: string | null
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          id?: string
+          payment_method?: string | null
+          status?: string | null
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          id?: string
+          payment_method?: string | null
+          status?: string | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          customer_id: string
+          ebook_id: string
+          id: string
+          rating: number
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          customer_id: string
+          ebook_id: string
+          id?: string
+          rating: number
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          customer_id?: string
+          ebook_id?: string
+          id?: string
+          rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_ebook_id_fkey"
+            columns: ["ebook_id"]
+            isOneToOne: false
+            referencedRelation: "ebooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

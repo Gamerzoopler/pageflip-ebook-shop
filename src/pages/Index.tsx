@@ -6,113 +6,31 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-
-interface Book {
-  id: number;
-  title: string;
-  author: string;
-  price: number;
-  originalPrice?: number;
-  cover: string;
-  rating: number;
-  reviews: number;
-  category: string;
-  description: string;
-  featured?: boolean;
-}
-
-const featuredBooks: Book[] = [
-  {
-    id: 1,
-    title: "The Digital Revolution",
-    author: "Sarah Chen",
-    price: 12.99,
-    originalPrice: 19.99,
-    cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=400&fit=crop",
-    rating: 4.8,
-    reviews: 234,
-    category: "Technology",
-    description: "A comprehensive guide to understanding how digital transformation is reshaping our world.",
-    featured: true
-  },
-  {
-    id: 2,
-    title: "Mindful Living",
-    author: "Dr. Michael Torres",
-    price: 9.99,
-    cover: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=400&fit=crop",
-    rating: 4.6,
-    reviews: 189,
-    category: "Self-Help",
-    description: "Practical techniques for incorporating mindfulness into your daily routine."
-  },
-  {
-    id: 3,
-    title: "Cosmic Mysteries",
-    author: "Elena Rodriguez",
-    price: 14.99,
-    cover: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop",
-    rating: 4.9,
-    reviews: 312,
-    category: "Science",
-    description: "Journey through the latest discoveries in astronomy and space exploration."
-  }
-];
-
-const allBooks: Book[] = [
-  ...featuredBooks,
-  {
-    id: 4,
-    title: "Creative Writing Mastery",
-    author: "James Wilson",
-    price: 11.99,
-    cover: "https://images.unsplash.com/photo-1471086569966-db3eebc25a59?w=300&h=400&fit=crop",
-    rating: 4.7,
-    reviews: 156,
-    category: "Writing",
-    description: "Master the craft of storytelling with proven techniques and exercises."
-  },
-  {
-    id: 5,
-    title: "Business Strategy 2024",
-    author: "Amanda Foster",
-    price: 16.99,
-    originalPrice: 24.99,
-    cover: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop",
-    rating: 4.5,
-    reviews: 298,
-    category: "Business",
-    description: "Navigate the modern business landscape with cutting-edge strategies."
-  },
-  {
-    id: 6,
-    title: "Healthy Cooking",
-    author: "Chef Maria Santos",
-    price: 13.99,
-    cover: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=300&h=400&fit=crop",
-    rating: 4.8,
-    reviews: 421,
-    category: "Cooking",
-    description: "Delicious recipes that nourish your body and satisfy your taste buds."
-  }
-];
+import { useEbooks, useFeaturedEbooks } from "@/hooks/useEbooks";
+import { useCategories } from "@/hooks/useCategories";
+import { Ebook } from "@/types/database";
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [cartItems, setCartItems] = useState<Book[]>([]);
+  const [cartItems, setCartItems] = useState<Ebook[]>([]);
   const { toast } = useToast();
 
-  const categories = ["All", "Technology", "Self-Help", "Science", "Writing", "Business", "Cooking"];
+  const { data: allEbooks = [], isLoading: ebooksLoading, error: ebooksError } = useEbooks();
+  const { data: featuredEbooks = [], isLoading: featuredLoading } = useFeaturedEbooks();
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
 
-  const filteredBooks = allBooks.filter(book => {
+  // Create categories list with "All" option
+  const categoryOptions = ["All", ...categories.map(cat => cat.name)];
+
+  const filteredBooks = allEbooks.filter(book => {
     const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          book.author.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || book.category === selectedCategory;
+    const matchesCategory = selectedCategory === "All" || book.categories?.name === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const addToCart = (book: Book) => {
+  const addToCart = (book: Ebook) => {
     if (!cartItems.find(item => item.id === book.id)) {
       setCartItems([...cartItems, book]);
       toast({
@@ -128,7 +46,7 @@ const Index = () => {
     }
   };
 
-  const removeFromCart = (bookId: number) => {
+  const removeFromCart = (bookId: string) => {
     setCartItems(cartItems.filter(item => item.id !== bookId));
     toast({
       title: "Removed from cart",
@@ -137,6 +55,10 @@ const Index = () => {
   };
 
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
+
+  if (ebooksError) {
+    console.error('Error loading ebooks:', ebooksError);
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -197,74 +119,80 @@ const Index = () => {
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h3 className="text-3xl font-bold text-gray-900 mb-8 text-center">Featured Books</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {featuredBooks.map((book) => (
-              <Card key={book.id} className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-0 shadow-lg">
-                <div className="relative overflow-hidden rounded-t-lg">
-                  <img
-                    src={book.cover}
-                    alt={book.title}
-                    className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  {book.featured && (
-                    <Badge className="absolute top-4 left-4 bg-yellow-500 text-yellow-900">
-                      Featured
-                    </Badge>
-                  )}
-                </div>
-                <CardHeader>
-                  <CardTitle className="text-lg font-semibold text-gray-900">{book.title}</CardTitle>
-                  <CardDescription className="text-gray-600">by {book.author}</CardDescription>
-                  <div className="flex items-center space-x-2">
-                    <div className="flex items-center">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm text-gray-600 ml-1">{book.rating}</span>
-                    </div>
-                    <span className="text-sm text-gray-500">({book.reviews} reviews)</span>
+          {featuredLoading ? (
+            <div className="text-center">Loading featured books...</div>
+          ) : featuredEbooks.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {featuredEbooks.map((book) => (
+                <Card key={book.id} className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-0 shadow-lg">
+                  <div className="relative overflow-hidden rounded-t-lg">
+                    <img
+                      src={book.cover_image_url || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=400&fit=crop"}
+                      alt={book.title}
+                      className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {book.is_featured && (
+                      <Badge className="absolute top-4 left-4 bg-yellow-500 text-yellow-900">
+                        Featured
+                      </Badge>
+                    )}
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 text-sm mb-4">{book.description}</p>
-                  <div className="flex items-center justify-between">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold text-gray-900">{book.title}</CardTitle>
+                    <CardDescription className="text-gray-600">by {book.author}</CardDescription>
                     <div className="flex items-center space-x-2">
-                      <span className="text-2xl font-bold text-green-600">${book.price}</span>
-                      {book.originalPrice && (
-                        <span className="text-gray-500 line-through">${book.originalPrice}</span>
-                      )}
+                      <div className="flex items-center">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm text-gray-600 ml-1">{book.rating?.toFixed(1) || 'N/A'}</span>
+                      </div>
                     </div>
-                    <Badge variant="secondary">{book.category}</Badge>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    onClick={() => addToCart(book)}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Add to Cart
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600 text-sm mb-4">{book.description || 'No description available'}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-2xl font-bold text-green-600">${book.price}</span>
+                      </div>
+                      <Badge variant="secondary">{book.categories?.name || 'Uncategorized'}</Badge>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      onClick={() => addToCart(book)}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Add to Cart
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-gray-500">No featured books available</div>
+          )}
         </div>
       </section>
 
       {/* Category Filter */}
       <section className="py-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap gap-2 justify-center">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                onClick={() => setSelectedCategory(category)}
-                className="mb-2"
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
+          {categoriesLoading ? (
+            <div className="text-center">Loading categories...</div>
+          ) : (
+            <div className="flex flex-wrap gap-2 justify-center">
+              {categoryOptions.map((category) => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? "default" : "outline"}
+                  onClick={() => setSelectedCategory(category)}
+                  className="mb-2"
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -272,47 +200,52 @@ const Index = () => {
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h3 className="text-3xl font-bold text-gray-900 mb-8 text-center">All Books</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredBooks.map((book) => (
-              <Card key={book.id} className="group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                <div className="relative overflow-hidden rounded-t-lg">
-                  <img
-                    src={book.cover}
-                    alt={book.title}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-semibold text-gray-900 line-clamp-2">{book.title}</CardTitle>
-                  <CardDescription className="text-sm text-gray-600">by {book.author}</CardDescription>
-                  <div className="flex items-center space-x-1">
-                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                    <span className="text-xs text-gray-600">{book.rating}</span>
+          {ebooksLoading ? (
+            <div className="text-center">Loading books...</div>
+          ) : filteredBooks.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredBooks.map((book) => (
+                <Card key={book.id} className="group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                  <div className="relative overflow-hidden rounded-t-lg">
+                    <img
+                      src={book.cover_image_url || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=400&fit=crop"}
+                      alt={book.title}
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-lg font-bold text-green-600">${book.price}</span>
-                      {book.originalPrice && (
-                        <span className="text-xs text-gray-500 line-through ml-1">${book.originalPrice}</span>
-                      )}
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-semibold text-gray-900 line-clamp-2">{book.title}</CardTitle>
+                    <CardDescription className="text-sm text-gray-600">by {book.author}</CardDescription>
+                    <div className="flex items-center space-x-1">
+                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                      <span className="text-xs text-gray-600">{book.rating?.toFixed(1) || 'N/A'}</span>
                     </div>
-                    <Badge variant="secondary" className="text-xs">{book.category}</Badge>
-                  </div>
-                </CardContent>
-                <CardFooter className="pt-0">
-                  <Button 
-                    onClick={() => addToCart(book)}
-                    size="sm"
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                  >
-                    Add to Cart
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-lg font-bold text-green-600">${book.price}</span>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">{book.categories?.name || 'Uncategorized'}</Badge>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="pt-0">
+                    <Button 
+                      onClick={() => addToCart(book)}
+                      size="sm"
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      Add to Cart
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-gray-500">
+              {searchTerm || selectedCategory !== "All" ? "No books found matching your criteria" : "No books available"}
+            </div>
+          )}
         </div>
       </section>
 
@@ -371,10 +304,9 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-4">Categories</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li>Fiction</li>
-                <li>Non-Fiction</li>
-                <li>Business</li>
-                <li>Technology</li>
+                {categories.slice(0, 4).map((category) => (
+                  <li key={category.id}>{category.name}</li>
+                ))}
               </ul>
             </div>
             <div>
