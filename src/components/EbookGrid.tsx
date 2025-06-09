@@ -5,7 +5,11 @@ import { useEffect } from "react";
 import { generateAndUploadSamplePdfs } from "./PdfGenerator";
 import { toast } from "sonner";
 
-export const EbookGrid = () => {
+interface EbookGridProps {
+  onAuthRequired: () => void;
+}
+
+export const EbookGrid = ({ onAuthRequired }: EbookGridProps) => {
   const { data: ebooks, isLoading, error } = useEbooks();
 
   useEffect(() => {
@@ -25,7 +29,7 @@ export const EbookGrid = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div key={i} className="h-96 bg-gray-100 rounded-lg animate-pulse" />
         ))}
@@ -52,7 +56,7 @@ export const EbookGrid = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {ebooks.map((ebook) => (
-        <EbookCard key={ebook.id} ebook={ebook} />
+        <EbookCard key={ebook.id} ebook={ebook} onAuthRequired={onAuthRequired} />
       ))}
     </div>
   );

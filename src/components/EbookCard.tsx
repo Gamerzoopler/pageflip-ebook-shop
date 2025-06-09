@@ -7,9 +7,10 @@ import { DownloadButton } from "./DownloadButton";
 
 interface EbookCardProps {
   ebook: Ebook;
+  onAuthRequired: () => void;
 }
 
-export const EbookCard = ({ ebook }: EbookCardProps) => {
+export const EbookCard = ({ ebook, onAuthRequired }: EbookCardProps) => {
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-2">
@@ -59,7 +60,12 @@ export const EbookCard = ({ ebook }: EbookCardProps) => {
             <span className="text-xs text-muted-foreground">{ebook.language}</span>
           )}
         </div>
-        <DownloadButton fileUrl={ebook.file_url} title={ebook.title} />
+        <DownloadButton 
+          fileUrl={ebook.file_url} 
+          title={ebook.title}
+          ebookId={ebook.id}
+          onAuthRequired={onAuthRequired}
+        />
       </CardFooter>
     </Card>
   );

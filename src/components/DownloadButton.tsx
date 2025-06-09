@@ -2,14 +2,27 @@
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useDownloads } from "@/hooks/useDownloads";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DownloadButtonProps {
   fileUrl: string | null;
   title: string;
+  ebookId: string;
+  onAuthRequired: () => void;
 }
 
-export const DownloadButton = ({ fileUrl, title }: DownloadButtonProps) => {
+export const DownloadButton = ({ fileUrl, title, ebookId, onAuthRequired }: DownloadButtonProps) => {
+  const { user } = useAuth();
+  const { trackDownload } = useDownloads();
+
   const handleDownload = async () => {
+    if (!user) {
+      onAuthRequired();
+      return;
+    }
+
     if (!fileUrl) {
       toast.error("Download not available");
       return;
@@ -17,6 +30,19 @@ export const DownloadButton = ({ fileUrl, title }: DownloadButtonProps) => {
 
     try {
       console.log(`Downloading: ${title}`);
+      
+      // Track download via edge function
+      const { error: trackError } = await supabase.functions.invoke('track-download', {
+        body: { ebookId }
+      });
+
+      if (trackError) {
+        console.error('Error tracking download:', trackError);
+        // Continue with download even if tracking fails
+      }
+
+      // Also track locally for realtime updates
+      trackDownload(ebookId);
       
       // Create a temporary link to trigger download
       const link = document.createElement('a');
@@ -42,7 +68,7 @@ export const DownloadButton = ({ fileUrl, title }: DownloadButtonProps) => {
       className="w-full"
     >
       <Download className="w-4 h-4 mr-2" />
-      Download PDF
+      {user ? 'Download PDF' : 'Sign in to Download'}
     </Button>
   );
 };
