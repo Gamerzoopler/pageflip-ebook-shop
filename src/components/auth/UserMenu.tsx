@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 export const UserMenu = () => {
   const { user, signOut } = useAuth();
@@ -46,10 +47,12 @@ export const UserMenu = () => {
           <User className="mr-2 h-4 w-4" />
           <span>Profile</span>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Download className="mr-2 h-4 w-4" />
-          <span>My Downloads</span>
-        </DropdownMenuItem>
+        <Link to="/downloads">
+          <DropdownMenuItem>
+            <Download className="mr-2 h-4 w-4" />
+            <span>My Downloads</span>
+          </DropdownMenuItem>
+        </Link>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut}>
           <LogOut className="mr-2 h-4 w-4" />

@@ -8,6 +8,8 @@ import { useRealtimeDownloads } from "@/hooks/useRealtimeDownloads";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Download, BookOpen } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useState } from "react";
 
 const Index = () => {
@@ -34,6 +36,14 @@ const Index = () => {
               <p className="text-gray-600 mt-1">Discover amazing ebooks and expand your knowledge</p>
             </div>
             <div className="flex items-center gap-4">
+              {user && (
+                <Link to="/downloads">
+                  <Button variant="outline" size="sm">
+                    <Download className="w-4 h-4 mr-2" />
+                    My Downloads
+                  </Button>
+                </Link>
+              )}
               {!loading && (
                 user ? (
                   <UserMenu />
@@ -49,6 +59,27 @@ const Index = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick Actions for authenticated users */}
+        {user && (
+          <div className="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h3 className="text-lg font-semibold text-blue-900 mb-2">Quick Actions</h3>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/downloads">
+                <Button variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  View My Downloads
+                </Button>
+              </Link>
+              <Button variant="outline" size="sm" onClick={() => {
+                document.getElementById('all-books')?.scrollIntoView({ behavior: 'smooth' });
+              }}>
+                <BookOpen className="w-4 h-4 mr-2" />
+                Browse All Books
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Categories Filter */}
         {categories && categories.length > 0 && (
           <div className="mb-8">
@@ -84,7 +115,7 @@ const Index = () => {
         )}
 
         {/* All Books Section */}
-        <section>
+        <section id="all-books">
           <h2 className="text-2xl font-bold mb-6">
             {selectedCategory ? 'Filtered Books' : 'All Books'}
           </h2>
