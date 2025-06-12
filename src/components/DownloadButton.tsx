@@ -68,7 +68,7 @@ export const DownloadButton = ({ fileUrl, title, ebookId, onAuthRequired }: Down
       className="w-full"
     >
       <Download className="w-4 h-4 mr-2" />
-      {user ? 'Download PDF' : 'Sign in to Download'}
+      {user ? 'Buy Book' : 'Sign in to Buy'}
     </Button>
   );
 };
