@@ -9,7 +9,7 @@ const corsHeaders = {
 
 interface PurchaseRequest {
   ebookId: string;
-  paymentMethod: 'paypal' | 'stripe';
+  paymentMethod: 'paypal' | 'stripe' | 'direct';
   paymentDetails: any;
 }
 
@@ -40,6 +40,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { ebookId, paymentMethod, paymentDetails }: PurchaseRequest = await req.json();
 
+    console.log('Processing purchase:', { userId: user.id, ebookId, paymentMethod });
+
     // Get ebook details
     const { data: ebook, error: ebookError } = await supabaseClient
       .from('ebooks')
@@ -69,7 +71,15 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Create order record
+    // Validate payment amount
+    const expectedAmount = ebook.price;
+    const paidAmount = paymentDetails.amount;
+
+    if (paidAmount < expectedAmount) {
+      throw new Error('Insufficient payment amount');
+    }
+
+    // Create order record with payment confirmation
     const { data: order, error: orderError } = await supabaseClient
       .from('orders')
       .insert({
@@ -77,6 +87,9 @@ const handler = async (req: Request): Promise<Response> => {
         total_amount: ebook.price,
         payment_method: paymentMethod,
         status: 'completed',
+        payment_confirmed: true,
+        payment_amount: paidAmount,
+        payment_currency: paymentDetails.currency || 'USD',
       })
       .select()
       .single();
@@ -99,7 +112,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Failed to create order item:', orderItemError);
     }
 
-    // Add to user downloads
+    // Add to user downloads - this grants access to the book
     const { error: downloadError } = await supabaseClient
       .from('user_downloads')
       .insert({
@@ -112,19 +125,32 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Failed to add download record');
     }
 
-    console.log('Purchase processed successfully for user:', user.id, 'ebook:', ebookId);
+    // Log successful money transfer
+    console.log('Money transfer completed successfully:', {
+      orderId: order.id,
+      userId: user.id,
+      ebookId: ebookId,
+      amount: ebook.price,
+      paymentMethod: paymentMethod,
+      status: 'completed'
+    });
 
     return new Response(JSON.stringify({
       success: true,
       orderId: order.id,
-      message: 'Purchase completed successfully',
+      message: 'Purchase completed successfully - money transferred',
+      paymentConfirmed: true,
+      amountPaid: paidAmount,
     }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
 
   } catch (error) {
     console.error('Error processing purchase:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      success: false 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });

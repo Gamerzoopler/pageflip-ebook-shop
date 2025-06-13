@@ -2,6 +2,7 @@
 import { FeaturedBooks } from "@/components/FeaturedBooks";
 import { EbookGrid } from "@/components/EbookGrid";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { PaymentModal } from "@/components/PaymentModal";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { useCategories } from "@/hooks/useCategories";
 import { useRealtimeDownloads } from "@/hooks/useRealtimeDownloads";
@@ -16,6 +17,8 @@ const Index = () => {
   const { data: categories } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedEbook, setSelectedEbook] = useState<any>(null);
   const { user, loading } = useAuth();
   
   // Enable realtime downloads for authenticated users
@@ -23,6 +26,16 @@ const Index = () => {
 
   const handleAuthRequired = () => {
     setAuthModalOpen(true);
+  };
+
+  const handlePurchaseRequired = (ebook: any) => {
+    setSelectedEbook(ebook);
+    setPaymentModalOpen(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    // Refresh the page or update state to reflect the new purchase
+    window.location.reload();
   };
 
   return (
@@ -110,7 +123,7 @@ const Index = () => {
         {!selectedCategory && (
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Featured Books</h2>
-            <FeaturedBooks onAuthRequired={handleAuthRequired} />
+            <FeaturedBooks onAuthRequired={handleAuthRequired} onPurchaseRequired={handlePurchaseRequired} />
           </section>
         )}
 
@@ -119,7 +132,7 @@ const Index = () => {
           <h2 className="text-2xl font-bold mb-6">
             {selectedCategory ? 'Filtered Books' : 'All Books'}
           </h2>
-          <EbookGrid onAuthRequired={handleAuthRequired} />
+          <EbookGrid onAuthRequired={handleAuthRequired} onPurchaseRequired={handlePurchaseRequired} />
         </section>
       </main>
 
@@ -127,6 +140,15 @@ const Index = () => {
         isOpen={authModalOpen} 
         onClose={() => setAuthModalOpen(false)} 
       />
+
+      {selectedEbook && (
+        <PaymentModal
+          isOpen={paymentModalOpen}
+          onClose={() => setPaymentModalOpen(false)}
+          ebook={selectedEbook}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
     </div>
   );
 };

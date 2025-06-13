@@ -1,25 +1,69 @@
 
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDownloads } from "@/hooks/useDownloads";
 import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
 
 interface DownloadButtonProps {
   fileUrl: string | null;
   title: string;
   ebookId: string;
+  price: number;
+  author: string;
   onAuthRequired: () => void;
+  onPurchaseRequired: (ebook: { id: string; title: string; price: number; author: string; }) => void;
 }
 
-export const DownloadButton = ({ fileUrl, title, ebookId, onAuthRequired }: DownloadButtonProps) => {
+export const DownloadButton = ({ 
+  fileUrl, 
+  title, 
+  ebookId, 
+  price, 
+  author, 
+  onAuthRequired, 
+  onPurchaseRequired 
+}: DownloadButtonProps) => {
   const { user } = useAuth();
   const { trackDownload } = useDownloads();
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const checkPurchaseStatus = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase.functions.invoke('validate-purchase', {
+          body: { ebookId }
+        });
+
+        if (!error && data?.hasPurchased) {
+          setHasPurchased(true);
+        }
+      } catch (error) {
+        console.error('Error checking purchase status:', error);
+      }
+    };
+
+    checkPurchaseStatus();
+  }, [user, ebookId]);
 
   const handleDownload = async () => {
     if (!user) {
       onAuthRequired();
+      return;
+    }
+
+    if (!hasPurchased) {
+      onPurchaseRequired({
+        id: ebookId,
+        title,
+        price,
+        author
+      });
       return;
     }
 
@@ -28,6 +72,7 @@ export const DownloadButton = ({ fileUrl, title, ebookId, onAuthRequired }: Down
       return;
     }
 
+    setLoading(true);
     try {
       console.log(`Downloading: ${title}`);
       
@@ -57,18 +102,32 @@ export const DownloadButton = ({ fileUrl, title, ebookId, onAuthRequired }: Down
     } catch (error) {
       console.error('Download error:', error);
       toast.error("Failed to download file");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const getButtonText = () => {
+    if (!user) return 'Sign in to Buy';
+    if (hasPurchased) return 'Download';
+    return `Buy for $${price.toFixed(2)}`;
+  };
+
+  const getButtonIcon = () => {
+    if (hasPurchased) return <Download className="w-4 h-4 mr-2" />;
+    return <ShoppingCart className="w-4 h-4 mr-2" />;
   };
 
   return (
     <Button 
       onClick={handleDownload}
-      variant="outline" 
+      variant={hasPurchased ? "default" : "outline"}
       size="sm"
       className="w-full"
+      disabled={loading}
     >
-      <Download className="w-4 h-4 mr-2" />
-      {user ? 'Buy Book' : 'Sign in to Buy'}
+      {getButtonIcon()}
+      {getButtonText()}
     </Button>
   );
 };
