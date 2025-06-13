@@ -1,1 +1,20 @@
+
 project_id = "sexupgaavdaaghqcritf"
+
+[functions.create-paypal-order]
+verify_jwt = true
+
+[functions.capture-paypal-payment]
+verify_jwt = true
+
+[functions.process-purchase]
+verify_jwt = true
+
+[functions.validate-purchase]
+verify_jwt = true
+
+[functions.track-download]
+verify_jwt = true
+
+[functions.get-analytics]
+verify_jwt = true
