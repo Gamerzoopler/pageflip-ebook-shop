@@ -8,9 +8,10 @@ import { DownloadButton } from "./DownloadButton";
 interface EbookCardProps {
   ebook: Ebook;
   onAuthRequired: () => void;
+  onPurchaseRequired: (ebook: { id: string; title: string; price: number; author: string; }) => void;
 }
 
-export const EbookCard = ({ ebook, onAuthRequired }: EbookCardProps) => {
+export const EbookCard = ({ ebook, onAuthRequired, onPurchaseRequired }: EbookCardProps) => {
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-2">
@@ -55,7 +56,7 @@ export const EbookCard = ({ ebook, onAuthRequired }: EbookCardProps) => {
       
       <CardFooter className="pt-2 flex flex-col gap-2">
         <div className="flex justify-between items-center w-full">
-          <span className="text-lg font-semibold">${ebook.price}</span>
+          <span className="text-lg font-semibold">${ebook.price?.toFixed(2) || '0.00'}</span>
           {ebook.language && (
             <span className="text-xs text-muted-foreground">{ebook.language}</span>
           )}
@@ -64,7 +65,10 @@ export const EbookCard = ({ ebook, onAuthRequired }: EbookCardProps) => {
           fileUrl={ebook.file_url} 
           title={ebook.title}
           ebookId={ebook.id}
+          price={ebook.price || 0}
+          author={ebook.author}
           onAuthRequired={onAuthRequired}
+          onPurchaseRequired={onPurchaseRequired}
         />
       </CardFooter>
     </Card>

@@ -21,7 +21,7 @@ interface PaymentModalProps {
 
 export const PaymentModal = ({ isOpen, onClose, ebook, onSuccess }: PaymentModalProps) => {
   const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'stripe'>('paypal');
+  const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'direct'>('paypal');
   const { user } = useAuth();
 
   const handlePayPalPayment = async () => {
@@ -153,7 +153,7 @@ export const PaymentModal = ({ isOpen, onClose, ebook, onSuccess }: PaymentModal
                   name="paymentMethod"
                   value="direct"
                   checked={paymentMethod === 'direct'}
-                  onChange={(e) => setPaymentMethod('direct' as any)}
+                  onChange={(e) => setPaymentMethod(e.target.value as 'direct')}
                   className="text-green-600"
                 />
                 <DollarSign className="h-5 w-5 text-green-600" />

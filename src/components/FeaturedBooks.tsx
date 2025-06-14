@@ -4,9 +4,10 @@ import { EbookCard } from "./EbookCard";
 
 interface FeaturedBooksProps {
   onAuthRequired: () => void;
+  onPurchaseRequired: (ebook: { id: string; title: string; price: number; author: string; }) => void;
 }
 
-export const FeaturedBooks = ({ onAuthRequired }: FeaturedBooksProps) => {
+export const FeaturedBooks = ({ onAuthRequired, onPurchaseRequired }: FeaturedBooksProps) => {
   const { data: featuredBooks, isLoading, error } = useFeaturedEbooks();
 
   if (isLoading) {
@@ -38,7 +39,12 @@ export const FeaturedBooks = ({ onAuthRequired }: FeaturedBooksProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {featuredBooks.map((ebook) => (
-        <EbookCard key={ebook.id} ebook={ebook} onAuthRequired={onAuthRequired} />
+        <EbookCard 
+          key={ebook.id} 
+          ebook={ebook} 
+          onAuthRequired={onAuthRequired} 
+          onPurchaseRequired={onPurchaseRequired}
+        />
       ))}
     </div>
   );

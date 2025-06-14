@@ -7,9 +7,10 @@ import { toast } from "sonner";
 
 interface EbookGridProps {
   onAuthRequired: () => void;
+  onPurchaseRequired: (ebook: { id: string; title: string; price: number; author: string; }) => void;
 }
 
-export const EbookGrid = ({ onAuthRequired }: EbookGridProps) => {
+export const EbookGrid = ({ onAuthRequired, onPurchaseRequired }: EbookGridProps) => {
   const { data: ebooks, isLoading, error } = useEbooks();
 
   useEffect(() => {
@@ -56,7 +57,12 @@ export const EbookGrid = ({ onAuthRequired }: EbookGridProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {ebooks.map((ebook) => (
-        <EbookCard key={ebook.id} ebook={ebook} onAuthRequired={onAuthRequired} />
+        <EbookCard 
+          key={ebook.id} 
+          ebook={ebook} 
+          onAuthRequired={onAuthRequired} 
+          onPurchaseRequired={onPurchaseRequired}
+        />
       ))}
     </div>
   );
