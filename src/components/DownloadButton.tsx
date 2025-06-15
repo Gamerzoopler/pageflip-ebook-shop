@@ -1,11 +1,9 @@
 
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Download, ShoppingCart } from "lucide-react";
-import { toast } from "sonner";
+import { Download, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDownloads } from "@/hooks/useDownloads";
-import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface DownloadButtonProps {
   fileUrl: string | null;
@@ -22,111 +20,104 @@ export const DownloadButton = ({
   title, 
   ebookId, 
   price, 
-  author, 
+  author,
   onAuthRequired, 
   onPurchaseRequired 
 }: DownloadButtonProps) => {
   const { user } = useAuth();
-  const { trackDownload } = useDownloads();
-  const [hasPurchased, setHasPurchased] = useState(false);
-  const [loading, setLoading] = useState(false);
+  
+  // Check if temporary access is active (5 minutes from page load)
+  const [hasTemporaryAccess, setHasTemporaryAccess] = React.useState(() => {
+    const startTime = localStorage.getItem('temporaryAccessStart');
+    if (!startTime) {
+      localStorage.setItem('temporaryAccessStart', Date.now().toString());
+      return true;
+    }
+    const elapsed = Date.now() - parseInt(startTime);
+    return elapsed < 5 * 60 * 1000; // 5 minutes
+  });
 
-  useEffect(() => {
-    const checkPurchaseStatus = async () => {
-      if (!user) return;
+  React.useEffect(() => {
+    const startTime = localStorage.getItem('temporaryAccessStart');
+    if (startTime) {
+      const timer = setTimeout(() => {
+        setHasTemporaryAccess(false);
+        localStorage.removeItem('temporaryAccessStart');
+        toast.info("Temporary access expired. Purchase required for downloads.");
+      }, 5 * 60 * 1000 - (Date.now() - parseInt(startTime)));
 
-      try {
-        const { data, error } = await supabase.functions.invoke('validate-purchase', {
-          body: { ebookId }
-        });
-
-        if (!error && data?.hasPurchased) {
-          setHasPurchased(true);
-        }
-      } catch (error) {
-        console.error('Error checking purchase status:', error);
-      }
-    };
-
-    checkPurchaseStatus();
-  }, [user, ebookId]);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const handleDownload = async () => {
+    console.log('Download button clicked', { user, hasTemporaryAccess, fileUrl });
+    
     if (!user) {
+      console.log('User not authenticated, showing auth modal');
       onAuthRequired();
       return;
     }
 
-    if (!hasPurchased) {
-      onPurchaseRequired({
-        id: ebookId,
-        title,
-        price,
-        author
-      });
-      return;
-    }
-
     if (!fileUrl) {
-      toast.error("Download not available");
+      toast.error("Download file not available");
       return;
     }
 
-    setLoading(true);
-    try {
-      console.log(`Downloading: ${title}`);
+    // Allow download if temporary access is active
+    if (hasTemporaryAccess) {
+      console.log('Temporary access active, allowing download');
+      toast.success(`Downloading ${title} (Free Access)`);
       
-      // Track download via edge function
-      const { error: trackError } = await supabase.functions.invoke('track-download', {
-        body: { ebookId }
-      });
-
-      if (trackError) {
-        console.error('Error tracking download:', trackError);
-        // Continue with download even if tracking fails
+      try {
+        const response = await fetch(fileUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${title}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } catch (error) {
+        console.error('Download error:', error);
+        toast.error("Failed to download file");
       }
-
-      // Also track locally for realtime updates
-      trackDownload(ebookId);
-      
-      // Create a temporary link to trigger download
-      const link = document.createElement('a');
-      link.href = fileUrl;
-      link.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast.success(`Downloading "${title}"`);
-    } catch (error) {
-      console.error('Download error:', error);
-      toast.error("Failed to download file");
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    // Regular purchase flow if no temporary access
+    console.log('No temporary access, requiring purchase');
+    onPurchaseRequired({
+      id: ebookId,
+      title,
+      price,
+      author
+    });
   };
 
   const getButtonText = () => {
-    if (!user) return 'Sign in to Buy';
-    if (hasPurchased) return 'Download';
-    return `Buy for $${price.toFixed(2)}`;
+    if (hasTemporaryAccess) {
+      return price > 0 ? `Download Free (Usually $${price.toFixed(2)})` : "Download Free";
+    }
+    return price > 0 ? `Download - $${price.toFixed(2)}` : "Download";
   };
 
   const getButtonIcon = () => {
-    if (hasPurchased) return <Download className="w-4 h-4 mr-2" />;
-    return <ShoppingCart className="w-4 h-4 mr-2" />;
+    return hasTemporaryAccess ? Download : (price > 0 ? Lock : Download);
   };
+
+  const ButtonIcon = getButtonIcon();
 
   return (
     <Button 
-      onClick={handleDownload}
-      variant={hasPurchased ? "default" : "outline"}
+      onClick={handleDownload} 
+      className={`w-full ${hasTemporaryAccess ? 'bg-green-600 hover:bg-green-700' : ''}`}
       size="sm"
-      className="w-full"
-      disabled={loading}
     >
-      {getButtonIcon()}
+      <ButtonIcon className="w-4 h-4 mr-2" />
       {getButtonText()}
     </Button>
   );

@@ -1,17 +1,18 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { FeaturedBooks } from "@/components/FeaturedBooks";
 import { EbookGrid } from "@/components/EbookGrid";
 import { PaymentModal } from "@/components/PaymentModal";
+import { TemporaryAccess } from "@/components/TemporaryAccess";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useCategories } from "@/hooks/useCategories";
 import { Search, BookOpen, Users, Award, Download } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 const Index = () => {
   const { user } = useAuth();
@@ -25,8 +26,16 @@ const Index = () => {
   } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [showTemporaryAccess, setShowTemporaryAccess] = useState(true);
   
   const { data: categories } = useCategories();
+
+  useEffect(() => {
+    // Show welcome message for temporary access
+    toast.success("🎉 You have 5 minutes of free access to all ebooks!", {
+      duration: 5000,
+    });
+  }, []);
 
   const handleAuthRequired = () => {
     setIsAuthModalOpen(true);
@@ -40,18 +49,27 @@ const Index = () => {
   const handlePaymentSuccess = () => {
     setIsPaymentModalOpen(false);
     setSelectedEbook(null);
-    // The purchase success will trigger real-time updates via the hooks
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Search is handled by the EbookGrid component via searchTerm prop
+  };
+
+  const handleAccessExpired = () => {
+    setShowTemporaryAccess(false);
+    toast.info("Free access period has ended. Purchase required for downloads.");
   };
 
   return (
     <div className="min-h-screen bg-background">
+      {showTemporaryAccess && (
+        <TemporaryAccess onAccessExpired={handleAccessExpired}>
+          <></>
+        </TemporaryAccess>
+      )}
+
       {/* Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+      <header className="bg-white shadow-sm border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center gap-2">
