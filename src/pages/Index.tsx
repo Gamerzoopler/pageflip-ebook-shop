@@ -43,6 +43,11 @@ const Index = () => {
     // The purchase success will trigger real-time updates via the hooks
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Search is handled by the EbookGrid component via searchTerm prop
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -88,15 +93,17 @@ const Index = () => {
           
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto mb-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                placeholder="Search for books, authors, or genres..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-3 text-lg border-0 bg-white/10 backdrop-blur-sm text-white placeholder-gray-300"
-              />
-            </div>
+            <form onSubmit={handleSearch}>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Input
+                  placeholder="Search for books, authors, or genres..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-3 text-lg border-0 bg-white/10 backdrop-blur-sm text-white placeholder-gray-300"
+                />
+              </div>
+            </form>
           </div>
 
           {/* Category Filter */}
@@ -181,6 +188,8 @@ const Index = () => {
           <EbookGrid 
             onAuthRequired={handleAuthRequired}
             onPurchaseRequired={handlePurchaseRequired}
+            searchTerm={searchTerm}
+            selectedCategory={selectedCategory}
           />
         </div>
       </section>

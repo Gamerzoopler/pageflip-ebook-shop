@@ -3,12 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Ebook } from "@/types/database";
 
-export const useEbooks = () => {
+export const useEbooks = (page: number = 1, pageSize: number = 12, searchTerm?: string, categoryId?: string) => {
   return useQuery({
-    queryKey: ['ebooks'],
+    queryKey: ['ebooks', page, pageSize, searchTerm, categoryId],
     queryFn: async () => {
-      console.log('Fetching ebooks from Supabase...');
-      const { data, error } = await supabase
+      console.log('Fetching ebooks from Supabase...', { page, pageSize, searchTerm, categoryId });
+      
+      let query = supabase
         .from('ebooks')
         .select(`
           *,
@@ -17,9 +18,28 @@ export const useEbooks = () => {
             name,
             description
           )
-        `)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        `, { count: 'exact' })
+        .eq('is_active', true);
+
+      // Apply search filter
+      if (searchTerm) {
+        query = query.or(`title.ilike.%${searchTerm}%,author.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      }
+
+      // Apply category filter
+      if (categoryId) {
+        query = query.eq('category_id', categoryId);
+      }
+
+      // Apply pagination
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      
+      query = query
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      const { data, error, count } = await query;
 
       if (error) {
         console.error('Error fetching ebooks:', error);
@@ -27,7 +47,11 @@ export const useEbooks = () => {
       }
 
       console.log('Fetched ebooks:', data);
-      return data as Ebook[];
+      return {
+        data: data as Ebook[],
+        count: count || 0,
+        totalPages: Math.ceil((count || 0) / pageSize)
+      };
     },
   });
 };
