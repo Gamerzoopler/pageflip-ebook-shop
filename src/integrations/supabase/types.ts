@@ -181,6 +181,9 @@ export type Database = {
           created_at: string | null
           customer_id: string
           id: string
+          payment_amount: number | null
+          payment_confirmed: boolean | null
+          payment_currency: string | null
           payment_method: string | null
           status: string | null
           total_amount: number
@@ -190,6 +193,9 @@ export type Database = {
           created_at?: string | null
           customer_id: string
           id?: string
+          payment_amount?: number | null
+          payment_confirmed?: boolean | null
+          payment_currency?: string | null
           payment_method?: string | null
           status?: string | null
           total_amount: number
@@ -199,6 +205,9 @@ export type Database = {
           created_at?: string | null
           customer_id?: string
           id?: string
+          payment_amount?: number | null
+          payment_confirmed?: boolean | null
+          payment_currency?: string | null
           payment_method?: string | null
           status?: string | null
           total_amount?: number
@@ -249,6 +258,35 @@ export type Database = {
           },
           {
             foreignKeyName: "reviews_ebook_id_fkey"
+            columns: ["ebook_id"]
+            isOneToOne: false
+            referencedRelation: "ebooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_downloads: {
+        Row: {
+          downloaded_at: string
+          ebook_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          downloaded_at?: string
+          ebook_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          downloaded_at?: string
+          ebook_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_downloads_ebook_id_fkey"
             columns: ["ebook_id"]
             isOneToOne: false
             referencedRelation: "ebooks"
