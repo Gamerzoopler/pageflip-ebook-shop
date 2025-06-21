@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { Clock, Sparkles } from 'lucide-react';
 
 interface TemporaryAccessProps {
   children: React.ReactNode;
@@ -36,9 +37,16 @@ export const TemporaryAccess = ({ children, onAccessExpired }: TemporaryAccessPr
   if (!isActive) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg">
-      <div className="text-sm font-medium">
-        Free Access Active: {formatTime(timeLeft)}
+    <div className="fixed top-4 right-4 z-50 gradient-purple text-white px-6 py-3 rounded-lg shadow-2xl border border-purple-300/20 backdrop-blur-sm">
+      <div className="flex items-center gap-2">
+        <Sparkles className="w-5 h-5 animate-pulse" />
+        <div className="text-sm font-medium">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            <span>Premium Access: {formatTime(timeLeft)}</span>
+          </div>
+          <div className="text-xs opacity-90 mt-1">All books free during trial</div>
+        </div>
       </div>
       {children}
     </div>
